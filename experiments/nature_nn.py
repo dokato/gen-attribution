@@ -1,12 +1,11 @@
 import time
+import os
 import sys
 sys.path.insert(0, '..')
 from utils import *
 
 import numpy as np
 import pandas as pd
-
-from sklearn.model_selection import train_test_split
 
 from tensorflow import keras
 from tensorflow.keras.models import Sequential
@@ -18,7 +17,8 @@ from tensorflow.keras.callbacks import ModelCheckpoint
 from tensorflow.keras.layers import BatchNormalization
 from tensorflow.keras.optimizers import SGD
 
-m = np.load('split1.npz')
+DATA_PATH = '../data/'
+m = np.load(os.path.join(DATA_PATH, 'split1.npz'))
 X_train, X_test, X_val = m['X_train'], m['X_test'], m['X_val']
 y_train, y_test, y_val = m['y_train'], m['y_test'], m['y_val']
 del m
@@ -26,7 +26,7 @@ dna_seqpad_length = 2*max_seq_length+cnn_filter_length
 
 num_classes = len(train_labels.columns)
 
-total_epoch = 100
+total_epoch = 10
 filter_num = 128
 filter_len = cnn_filter_length
 num_dense_nodes = 200
