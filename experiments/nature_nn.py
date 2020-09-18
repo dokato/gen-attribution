@@ -23,7 +23,7 @@ train_values = pd.read_csv(DATA_DIR + 'train_values.csv', index_col='sequence_id
 train_labels = pd.read_csv(DATA_DIR + 'train_labels.csv', index_col='sequence_id')
 
 max_seq_length = 8000
-cnn_filter_length = 48
+cnn_filter_length = 12
 
 print('Preprocessing start...')
 t0 = time.time()
@@ -44,13 +44,13 @@ np.savez('split1.npz', X_train=X_train, X_test=X_test, X_val=X_val, \
 #y_train, y_test, y_val = m['y_train'], m['y_test'], m['y_val']
 #del m
 print('Split into test/training finished', (time.time()-t0)/60 ,'min')
-dna_seqpad_length = max_seq_length
+dna_seqpad_length = 2*max_seq_length+cnn_filter_length
 
 num_classes = len(train_labels.columns)
 
 total_epoch = 100
 filter_num = 128
-filter_len = 12
+filter_len = cnn_filter_length
 num_dense_nodes = 200
 
 model = Sequential()
