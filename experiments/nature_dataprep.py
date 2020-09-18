@@ -25,6 +25,7 @@ print('One hot encoding finished')
 X_train, X_test, y_train, y_test = train_test_split(enc_seqs, train_labels_onehot, test_size=0.10, random_state=12)
 X_test, X_val, y_test, y_val = train_test_split(X_test, y_test, test_size=0.70, random_state=12)
 print('Split into test/training finished', (time.time()-t0)/60 ,'min')
-
+print('Saving data...')
 np.savez('split1.npz', X_train=X_train, X_test=X_test, X_val=X_val, \
                        y_train=y_train, y_test=y_test, y_val=y_val)
+print('Finished')
