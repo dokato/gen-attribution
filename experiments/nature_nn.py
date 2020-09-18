@@ -17,6 +17,12 @@ from tensorflow.keras.callbacks import ModelCheckpoint
 from tensorflow.keras.layers import BatchNormalization
 from tensorflow.keras.optimizers import SGD
 
+max_seq_length = 8000
+cnn_filter_length = 12
+
+DATA_DIR =  '/data/deeplearn/genetic-engineering-attribution-challenge/'
+train_labels = pd.read_csv(DATA_DIR + 'train_labels.csv', index_col='sequence_id')
+
 DATA_PATH = '../data/'
 m = np.load(os.path.join(DATA_PATH, 'split1.npz'))
 X_train, X_test, X_val = m['X_train'], m['X_test'], m['X_val']
@@ -32,7 +38,7 @@ filter_len = cnn_filter_length
 num_dense_nodes = 200
 
 model = Sequential()
-model.add(Input((None, 4, dna_seqpad_length)))
+model.add(Input((4, dna_seqpad_length)))
 model.add(Reshape(target_shape=(dna_seqpad_length, 4)))
 model.add(Conv1D(input_shape=(dna_seqpad_length, 4), filters=filter_num, kernel_size=filter_len, activation="relu", padding ="same"))
 model.add(MaxPooling1D(pool_size=8))
@@ -49,7 +55,7 @@ print(model.summary())
 print('Start training... ')
 # what is class weight?
 history = model.fit(X_train, y_train, batch_size = 8, \
-            validation_data=(X_val, y_val), nb_epoch=1, verbose=1)
+            validation_data=(X_val, y_val), epochs = total_epoch, verbose=1)
 
 print('Training finished')
 model.save("first_model")
