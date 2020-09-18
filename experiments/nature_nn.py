@@ -1,5 +1,7 @@
 import time
-from .utils import *
+import sys
+sys.path.insert(0, '..')
+from utils import *
 
 import numpy as np
 from tensorflow.keras.models import Sequential
