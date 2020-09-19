@@ -1,5 +1,7 @@
 import numpy as np
+import sentencepiece as spm
 from utils import *
+import pandas as pd
 
 max_seq_length = 8000
 cnn_filter_length = 48
@@ -9,3 +11,18 @@ unpadded_seq = ['TACTAGTAGCGGCCGCTGCAGTCCGGCAAAAAAACGGGCAAGGTGTCACCACCCTGCCCTTTT
 dna_seqs = pad_dna(unpadded_seq, max_seq_length)
 dna_seqs = append_rc(dna_seqs, cnn_filter_length)
 dna_seqs = convert_onehot_4(dna_seqs)
+
+DATA_DIR =  '/data/deeplearn/genetic-engineering-attribution-challenge/'
+train_values = pd.read_csv(DATA_DIR + 'train_values.csv', index_col='sequence_id')
+test_values = pd.read_csv(DATA_DIR + 'test_values.csv', index_col='sequence_id')
+
+with open('data/to_emb_train.dat', 'w+') as ff:
+    for seq in list(train_values.sequence):
+        ff.write(seq+'\n')
+    for seq in list(test_values.sequence):
+        ff.write(seq+'\n')
+
+spm.SentencePieceTrainer.train(input='data/to_emb_train.dat',
+                               model_prefix='m1', vocab_size=1000, model_type='bpe',
+                               max_sentence_length=10000)
+
