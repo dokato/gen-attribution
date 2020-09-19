@@ -123,3 +123,41 @@ def top10_accuracy_scorer(estimator, X, y):
  
     return top_10_accuracy
 
+def top10_accuracy_scorer_binary(estimator, X, y):
+    """A modifiedcustom scorer that evaluates a model on whether the correct
+    label is in the top 10 most probable predictions.
+
+    Args:
+        estimator (model, sklearn or keras): A model that should be evaluated.
+        X (numpy array): The test data.
+        y (numpy array): The ground truth matrix one hot encoded
+
+    Returns:
+        float: Accuracy of the model as defined by the proportion of predictions
+               in which the correct label was in the top 10. Higher is better.
+    """
+    probas = estimator.predict_proba(X)
+    top10_idx = np.argpartition(probas, -10, axis=1)[:, -10:]
+    y_real_idx = np.where(y==1)[1]
+    mask = top10_idx == y_real_idx.reshape((y_real_idx.size, 1))
+    return mask.any(axis=1).mean()
+
+
+def get_class_weights(y_train):
+    """Generates class weights.
+
+    Args:
+        y_train (np.array): one-hot encoded labels
+
+    Returns:
+        dict: with class weights
+    """
+    cl_weight = {}
+    for i in range(y_train.shape[1]):
+        cl_weight[i] = 0
+    for x in range(y_train.shape[0]):
+        cl_weight[np.argmax(y_train[x,:])] += 1
+    sumval = sum(cl_weight.values())
+    for y in cl_weight.keys():
+        cl_weight[y] = len(cl_weight)*float(cl_weight[y])/float(sumval)
+    return cl_weight

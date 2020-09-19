@@ -17,14 +17,16 @@ from tensorflow.keras.callbacks import ModelCheckpoint
 from tensorflow.keras.layers import BatchNormalization
 from tensorflow.keras.optimizers import SGD
 
+WEIGHTS_PATH = '../weights/'
+
 max_seq_length = 8000
 cnn_filter_length = 12
 
 DATA_DIR =  '/data/deeplearn/genetic-engineering-attribution-challenge/'
 train_labels = pd.read_csv(DATA_DIR + 'train_labels.csv', index_col='sequence_id')
 
-DATA_PATH = '../data/'
-m = np.load(os.path.join(DATA_PATH, 'split1.npz'))
+TMP_DATA_PATH = '../data/'
+m = np.load(os.path.join(TMP_DATA_PATH, 'split1.npz'))
 X_train, X_test, X_val = m['X_train'], m['X_test'], m['X_val']
 y_train, y_test, y_val = m['y_train'], m['y_test'], m['y_val']
 del m
@@ -53,9 +55,11 @@ model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=["accur
 print(model.summary())
 
 print('Start training... ')
-# what is class weight?
+
+cl_weight = get_class_weights(y_train)
 history = model.fit(X_train, y_train, batch_size = 8, \
-            validation_data=(X_val, y_val), epochs = total_epoch, verbose=1)
+            validation_data=(X_val, y_val), epochs = total_epoch, verbose=1,
+            class_weight = cl_weight)
 
 print('Training finished')
-model.save("first_model")
+model.save(os.path.join(WEIGHTS_PATH, "first_model2.h5"))
