@@ -161,3 +161,52 @@ def get_class_weights(y_train):
     for y in cl_weight.keys():
         cl_weight[y] = len(cl_weight)*float(cl_weight[y])/float(sumval)
     return cl_weight
+
+def get_discard_probabilities(y, t = 0.01):
+    """Create a Word2vec-style subsampling distribution.
+        
+    Parameters:
+        y (array): array of class labels
+        t (float): threshold (default 0.01). 
+    
+    Creates a vector of probabilities that specifies how likely each sample 
+    is discarded in each iteration. Classes with a frequency of <t are never discarded.
+
+    Reference:
+    Mikolov, T., Sutskever, I., Chen, K., Corrado, G. S., & Dean, J. (2013). 
+    Distributed Representations of Words and Phrases and their Compositionality. 
+    In C. J. C. Burges, L. Bottou, M. Welling, Z. Ghahramani, & K. Q. Weinberger (Eds.), 
+    Advances in Neural Information Processing Systems 26 (pp. 3111–3119). 
+    Curran Associates, Inc. 
+    Retrieved from http://papers.nips.cc/paper/5021-distributed-representations-of-words-and-phrases-and-their-compositionality.pdf
+    """
+    unique = np.unique(y)
+    counts = np.array([np.count_nonzero(y == u) for u in unique])
+    class_frequency = counts / counts.sum()
+
+    # Formula on p.4, Eq. 5: discard probability per class
+    discard_class = 1 - np.sqrt(t/class_frequency)
+    
+    # now turn this into discard probability per sample
+    discard_probabilities = np.zeros(len(y), dtype=np.float)
+    for u, p in zip(unique, discard_class):
+        discard_probabilities[y == u] = p
+    
+    return discard_probabilities
+
+def discard_samples(discard_probabilities, y, X = None):
+    """Randomly discard samples.
+        
+    Parameters:
+        discard_probabilities (array): array of probabilities of discarding each sample
+        y, X (arrays): class labels and features
+    
+    """
+    select_ix = np.squeeze(np.array([np.random.rand(len(y)) > discard_probabilities]))
+    print(select_ix)
+    ys = y[select_ix]
+    if X is not None:
+        Xs = X[select_ix, :]
+        return ys, Xs
+    else:
+        return ys
