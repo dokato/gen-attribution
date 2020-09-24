@@ -32,7 +32,6 @@ class LSTM_network(nn.Module):
         X - (batch size, seq. length, embedding size)
         '''
         x, _ = self.lstm(X)
-        print(x.shape)
         x = x[:, -1, :]
         x = F.relu(self.fc1(x))
         x = self.drop(x)
