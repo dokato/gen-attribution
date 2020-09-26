@@ -16,6 +16,10 @@ DATA_DIR =  '/data/deeplearn/genetic-engineering-attribution-challenge/'
 train_values = pd.read_csv(DATA_DIR + 'train_values.csv', index_col='sequence_id')
 test_values = pd.read_csv(DATA_DIR + 'test_values.csv', index_col='sequence_id')
 
+max_tr = np.max(train_values.sequence.map(len).to_numpy())
+max_tst = np.max(test_values.sequence.map(len).to_numpy())
+max_seq = np.max([max_tr, max_tst])
+
 with open('data/to_emb_train.dat', 'w+') as ff:
     for seq in list(train_values.sequence):
         ff.write(seq+'\n')
@@ -24,5 +28,9 @@ with open('data/to_emb_train.dat', 'w+') as ff:
 
 spm.SentencePieceTrainer.train(input='data/to_emb_train.dat',
                                model_prefix='m1', vocab_size=1000, model_type='bpe',
-                               max_sentence_length=10000)
+                               max_sentence_length=max_seq)
 
+# max sentence length
+
+# sp = spm.SentencePieceProcessor(model_file='../m1000.model')
+# sp.encode(unpadded_seq[0])
