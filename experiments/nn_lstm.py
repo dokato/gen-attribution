@@ -46,7 +46,20 @@ def load_embeddings(path):
     '''
     pass
 
-def train(X, y, epochs = 1, batch = 10, lr = 0.01):
+def padding_training_seq(X):
+    '''
+    Padding training sequence to the size size.
+    Returns torch.tensor.
+    '''
+    lengths = map(len, X)
+    max_seq = max(lengths)
+    n_samples = len(X)
+    Xt = torch.zeros((n_samples, max_seq))
+    for i in range(5): 
+        Xt[i,:len(X[i])] = torch.tensor(X[i]
+    return Xt
+
+def train(X, y, Xval, yval, epochs = 1, batch = 10, lr = 0.01):
     '''
     IN:
       X - matrix of shape (nr of sequences, sequence length, nr of embeddings)
@@ -56,29 +69,36 @@ def train(X, y, epochs = 1, batch = 10, lr = 0.01):
       lr (float) - learning rate
     '''
     net = LSTM_network(EMB_DIM)
+    net.to(device)
     n_samples = X.shape[0]
-    batch_samples = np.arange(n_samples)
-
     optimizer = optim.Adam(rnn.parameters(), lr = lr)
+    #optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
+    criterion = nn.CrossEntropyLoss()
+    Xval = padding_training_seq(Xval)
+    #Xval, yval = Xval.to(device), yval.to(device)
 
     for e in range(epochs):
         total_loss = 0
         val_loss = 0
         net.train()
-        np.random.shuffle(batch_samples)
-        for batch in range(n_samples//batch_size):
-            batch_ids = batch_samples[int(i*batch):int(i*batch + batch_size)]
-            X_train = X[batch_ids, :, :] # how to handle different sequence size ???
-            y_train = torch.from_numpy(y[batch_ids, :])
+        for xb, yb in batch_sorted(X, y, batch):
+            X_train = padding_training_seq(Xb) # how to handle different sequence size ???
+            y_train = torch.from_numpy(yb)
 
-            y_pred = net.forward(X_train)  
-            loss = F.cross_entropy(y_pred, y_train)
+            #X_train, y_train = X_train.to(device), y_train.to(device)
+            optimizer.zero_grad()
+
+            y_pred = net.forward(X_train)
+            loss = criterion(y_pred, y_train)
 
             # calculate gradients and update
-            optimizer.zero_grad()
             loss.backward()    
             optimizer.step()
 
             total_loss += loss.item()
         net.eval()
-        print(f"epoch: {e}, total loss: {total_loss}")
+        y_pred_val = net.forward(Xval)
+        loss = criterion(y_pred_val, y_val)
+        val_loss = loss.item()
+        print(f"E: {e+1}/{epochs}| total training loss: {total_loss} | val loss: {val_loss}")
+
