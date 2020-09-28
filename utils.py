@@ -15,7 +15,6 @@ def pad_dna(seqs, maxlen):
     OUT:
        list of padded DNA sequences
     '''
-    start = time.time()
     padded_seqs = [''] * len(seqs)
     for i in seqs:
         if len(i) > maxlen:
@@ -27,7 +26,6 @@ def pad_dna(seqs, maxlen):
         else:
             seq = seqs[j]
         padded_seqs[j] = seq + "N" * (maxlen - len(seq))
-    end = time.time()
     return padded_seqs
 
 def append_rc(seqs, filter_length):
@@ -41,7 +39,6 @@ def append_rc(seqs, filter_length):
     OUT:
        list of reversed dna seqs
     '''
-    start = time.time()
     full_seqs = [''] * len(seqs)
     rc_dict = {'A':'T','T':'A','G':'C','C':'G','N':'N'}
     for j in range(len(seqs)):
@@ -50,7 +47,6 @@ def append_rc(seqs, filter_length):
         for n in fwd_seq:
             complement_seq += rc_dict[n]
         full_seqs[j] = fwd_seq + 'N'*filter_length + complement_seq[::-1] #[::-1] reverses string 
-    end = time.time()
     return full_seqs
 
 def convert_onehot_4(list_of_seqs):
