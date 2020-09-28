@@ -82,22 +82,3 @@ def train(X, y, epochs = 1, batch = 10, lr = 0.01):
             total_loss += loss.item()
         net.eval()
         print(f"epoch: {e}, total loss: {total_loss}")
-
-
-from torchtext.data import Field
-from torchtext.data import BucketIterator
-
-SEQ = Field(sequential=True, use_vocab=False, pad_token=99)
-LABEL = Field(sequential=False, use_vocab=False)
-
-data = [([0,1,2,1,3,2], (1,0,1)), ([0,1,0],(0,0,1)), ([2],(0,0,1)), ([3], (1,0,1))]
-
-data = [dict(seq=[0,1,2,1,3,2], lab=(1,0,1)),
-        dict(seq=[0,1,0],lab=(0,0,1)),
-        dict(seq=[2], lab=(0,0,1)),
-        dict(seq=[3], lab=(1,0,1))]
-
-dt = torchtext.data.Dataset(data, fields = {'seq':SEQ, 'lab':LABEL})
-bi = BucketIterator(dt, batch_size=2, sort_key=lambda x: len(x['seq']))
-
-

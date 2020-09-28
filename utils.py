@@ -157,3 +157,34 @@ def get_class_weights(y_train):
     for y in cl_weight.keys():
         cl_weight[y] = len(cl_weight)*float(cl_weight[y])/float(sumval)
     return cl_weight
+
+def batch_sorted(X, y, batch_size):
+    '''
+    It returns sorted values of X by length of sequence:
+    IN:
+      X (list) -  training data (nr examples, seq length)
+      y (np.array/list) - label matrix
+      batch_size (int) - nr of examples in batch
+    OUT:
+      iterator, giving (X_batch, y_batch) tuple
+    '''
+    assert len(X) == len(y), "X and y not the same size"
+    X = list(X)
+    n_tr = len(X)
+    lengths = map(len, X)
+    idcs_sorted = [ii[1] for ii in sorted(zip(lengths, range(n_tr)))]
+    buckets = []
+    bucket_idcs = []
+    X = np.array(X, dtype=object)
+    y = np.asarray(y)
+    while len(idcs_sorted):
+        bucket_idcs.append(idcs_sorted.pop(0))
+        if len(bucket_idcs) == batch_size:
+            np.random.shuffle(bucket_idcs)
+            buckets.append((X[bucket_idcs], y[bucket_idcs]))
+            bucket_idcs = []
+    np.random.shuffle(bucket_idcs)
+    buckets.append((X[bucket_idcs], y[bucket_idcs]))
+    np.random.shuffle(buckets)
+    for Xb, yb in buckets:
+        yield Xb, yb
