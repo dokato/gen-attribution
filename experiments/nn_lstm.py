@@ -62,7 +62,7 @@ def padding_training_seq(X, vocab_size = VOCAB_SIZE):
     return Xt.long()
 
 def train(X, y, Xval, yval, emb_weights, Xtest = None, ytest = None,
-          epochs = 1, batch = 10, lr = 0.01, save = None):
+          epochs = 1, batch = 100, lr = 0.01, save = None):
     '''
     IN:
       X - matrix of shape (nr of sequences, sequence length, nr of embeddings)
@@ -76,10 +76,11 @@ def train(X, y, Xval, yval, emb_weights, Xtest = None, ytest = None,
     '''
     net = LSTM_network(emb_weights, 200)
     net.to(device)
-    optimizer = optim.Adam(rnn.parameters(), lr = lr)
+    optimizer = optim.Adam(net.parameters(), lr = lr)
     #optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
     criterion = nn.CrossEntropyLoss()
     Xval = padding_training_seq(Xval)
+    yval = torch.from_numpy(yval)
     Xval, yval = Xval.to(device), yval.to(device)
     print('Training started')
     for e in range(epochs):
@@ -101,6 +102,8 @@ def train(X, y, Xval, yval, emb_weights, Xtest = None, ytest = None,
             optimizer.step()
 
             total_loss += loss.item()
+            print('.', end = "")
+        print()
         net.eval()
         y_pred_val = net.forward(Xval)
         loss = criterion(y_pred_val, yval)
@@ -109,8 +112,8 @@ def train(X, y, Xval, yval, emb_weights, Xtest = None, ytest = None,
     print('Training done!')
     if Xtest:
         Xtest = padding_training_seq(Xtest)
+        ytest = torch.from_numpy(ytest)
         Xtest, ytest = Xtest.to(device), ytest.to(device)
-
         net.eval()
         y_pred_tst = net.forward(Xval)
         loss = criterion(y_pred_tst, ytest)
