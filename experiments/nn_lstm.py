@@ -1,4 +1,8 @@
 import os
+import sys
+sys.path.insert(0, '..')
+from utils import *
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
