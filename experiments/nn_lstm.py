@@ -57,7 +57,7 @@ def padding_training_seq(X, vocab_size = VOCAB_SIZE):
     max_seq = max(lengths)
     n_samples = len(X)
     Xt = torch.zeros((n_samples, max_seq), device=device) + vocab_size
-    for i in range(5): 
+    for i in range(n_samples): 
         Xt[i,:len(X[i])] = torch.tensor(X[i])
     return Xt.long()
 
@@ -95,7 +95,7 @@ def train(X, y, Xval, yval, emb_weights, Xtest = None, ytest = None,
             optimizer.zero_grad()
 
             y_pred = net.forward(X_train)
-            loss = criterion(y_pred.argmax(1), y_train.argmax(1))
+            loss = criterion(y_pred, y_train.argmax(1))
 
             # calculate gradients and update
             loss.backward()    
