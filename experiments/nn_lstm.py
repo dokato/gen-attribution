@@ -95,7 +95,7 @@ def train(X, y, Xval, yval, emb_weights, Xtest = None, ytest = None,
             optimizer.zero_grad()
 
             y_pred = net.forward(X_train)
-            loss = criterion(y_pred, y_train)
+            loss = criterion(y_pred.argmax(1), y_train.argmax(1))
 
             # calculate gradients and update
             loss.backward()    
@@ -106,7 +106,7 @@ def train(X, y, Xval, yval, emb_weights, Xtest = None, ytest = None,
         print()
         net.eval()
         y_pred_val = net.forward(Xval)
-        loss = criterion(y_pred_val, yval)
+        loss = criterion(y_pred_val.argmax(1), yval.argmax(1))
         val_loss = loss.item()
         print(f"E: {e+1}/{epochs}| total training loss: {total_loss} | val loss: {val_loss}")
     print('Training done!')
@@ -116,7 +116,7 @@ def train(X, y, Xval, yval, emb_weights, Xtest = None, ytest = None,
         Xtest, ytest = Xtest.to(device), ytest.to(device)
         net.eval()
         y_pred_tst = net.forward(Xval)
-        loss = criterion(y_pred_tst, ytest)
+        loss = criterion(y_pred_tst.argmax(1), ytest.argmax(1))
         tst_loss = loss.item()
         print(f'Test loss {tst_loss}')
         print('TOP 10 on test:', top10_accuracy_scorer_binary(y_pred_tst, None, ytest, proba=True))
