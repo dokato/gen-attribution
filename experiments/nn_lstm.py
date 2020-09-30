@@ -48,7 +48,7 @@ class LSTM_network(nn.Module):
         x = self.softmax(self.fc2(x))
         return x
 
-def padding_training_seq(X, emb_size = EMB_SIZE):
+def padding_training_seq(X, vocab_size = VOCAB_SIZE):
     '''
     Padding training sequence to the size size.
     Returns torch.tensor.
@@ -56,29 +56,33 @@ def padding_training_seq(X, emb_size = EMB_SIZE):
     lengths = map(len, X)
     max_seq = max(lengths)
     n_samples = len(X)
-    Xt = torch.zeros((n_samples, max_seq)) + emb_size
+    Xt = torch.zeros((n_samples, max_seq), device=device) + vocab_size
     for i in range(5): 
         Xt[i,:len(X[i])] = torch.tensor(X[i])
-    return Xt
+    return Xt.long()
 
-def train(X, y, Xval, yval, epochs = 1, batch = 10, lr = 0.01):
+def train(X, y, Xval, yval, emb_weights, Xtest = None, ytest = None,
+          epochs = 1, batch = 10, lr = 0.01, save = None):
     '''
     IN:
       X - matrix of shape (nr of sequences, sequence length, nr of embeddings)
       y - matrix of shape (nr of sequences, number of classes)
+      Xval, yval, Xtest = None, ytest = None - the same for validation and test
+      emb_weights (torch.Tensor) - embedding weights
       epochs (int) - nr of epochs
       batch (int) - nr of examples shown in batches
       lr (float) - learning rate
+      save (str) - if not None, then path to file where weights are saved
     '''
-    net = LSTM_network(EMB_DIM)
+    net = LSTM_network(emb_weights, 200)
     net.to(device)
     n_samples = X.shape[0]
     optimizer = optim.Adam(rnn.parameters(), lr = lr)
     #optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
     criterion = nn.CrossEntropyLoss()
     Xval = padding_training_seq(Xval)
-    #Xval, yval = Xval.to(device), yval.to(device)
-
+    Xval, yval = Xval.to(device), yval.to(device)
+    print('Training started')
     for e in range(epochs):
         total_loss = 0
         val_loss = 0
@@ -100,7 +104,35 @@ def train(X, y, Xval, yval, epochs = 1, batch = 10, lr = 0.01):
             total_loss += loss.item()
         net.eval()
         y_pred_val = net.forward(Xval)
-        loss = criterion(y_pred_val, y_val)
+        loss = criterion(y_pred_val, yval)
         val_loss = loss.item()
         print(f"E: {e+1}/{epochs}| total training loss: {total_loss} | val loss: {val_loss}")
+    print('Training done!')
+    if Xtest:
+        Xtest = padding_training_seq(Xtest)
+        Xtest, ytest = Xtest.to(device), ytest.to(device)
 
+        net.eval()
+        y_pred_tst = net.forward(Xval)
+        loss = criterion(y_pred_tst, ytest)
+        tst_loss = loss.item()
+        print(f'Test loss {tst_loss}')
+        print('TOP 10 on test:', top10_accuracy_scorer_binary(y_pred_tst, None, ytest, proba=True))
+
+    if save:
+        torch.save(net.state_dict(), save)
+        print('Save and exit')
+
+if __name__ == "__main__":
+    VOCAB_SIZE = 1000
+    NR_EPOCHS = 1
+    print("Loading data")
+    (X_train, y_train, X_test, y_test, X_val, y_val) = load_sequence_train_data()
+    sp = load_bpe_model(f'x{VOCAB_SIZE}.model')
+    print('Encoding BPE')
+    X_train = sp.encode(X_train)
+    X_test = sp.encode(X_test)
+    X_val = sp.encode(X_val)
+    print('Loading embeddings')
+    embs = load_embeddings('word2vec_skipgram_vocab1000_100dim_10epochs.pickle')
+    train(X_train, y_train, X_val, y_val, embs, X_test, y_test, epochs = NR_EPOCHS)

@@ -4,10 +4,15 @@ import itertools
 import time
 import os
 import pickle
+import torch
+
+import sentencepiece as spm
 
 ## contants
 
-EMB_PATH = " /data/deeplearn/genetic-engineering-attribution-challenge/models/"
+DATA_DIR =  "/data/deeplearn/genetic-engineering-attribution-challenge/"
+EMB_PATH = "/data/deeplearn/genetic-engineering-attribution-challenge/models/"
+BPE_PATH = "/home/guest/dominik/gen-attribution/weights"
 
 ## auxiliary function
 
@@ -126,25 +131,28 @@ def top10_accuracy_scorer(estimator, X, y):
  
     return top_10_accuracy
 
-def top10_accuracy_scorer_binary(estimator, X, y):
+def top10_accuracy_scorer_binary(estimator, X, y, proba = False):
     """A modifiedcustom scorer that evaluates a model on whether the correct
     label is in the top 10 most probable predictions.
 
     Args:
-        estimator (model, sklearn or keras): A model that should be evaluated.
+        estimator (model, sklearn or keras, matrix): A model that should be
+              evaluated, or matrix with probabilities (look *proba*)
         X (numpy array): The test data.
         y (numpy array): The ground truth matrix one hot encoded
-
+        proba (bool) - if True then estimator is assumed to be probabilities
     Returns:
         float: Accuracy of the model as defined by the proportion of predictions
                in which the correct label was in the top 10. Higher is better.
     """
-    probas = estimator.predict_proba(X)
+    if proba:
+        probas = estimator
+    else:
+        probas = estimator.predict_proba(X)
     top10_idx = np.argpartition(probas, -10, axis=1)[:, -10:]
     y_real_idx = np.where(y==1)[1]
     mask = top10_idx == y_real_idx.reshape((y_real_idx.size, 1))
     return mask.any(axis=1).mean()
-
 
 def get_class_weights(y_train):
     """Generates class weights.
@@ -212,6 +220,40 @@ def load_embeddings(emb_file, path = EMB_PATH, add_padding = 'zero'):
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
         padz = torch.zeros((1, emb_dim), device = device)
         embeddings = torch.cat((embeddings, padz), 0)
-   if add_padding == 'mean':
-        embeddings = torch.cat((embeddings, embeddings.mean(axis=0).view((1, emb_dim))), 0)
+    if add_padding == 'mean':
+       embeddings = torch.cat((embeddings, embeddings.mean(axis=0).view((1, emb_dim))), 0)
     return embeddings
+
+def load_bpe_model(model_file, path = BPE_PATH):
+    sp = spm.SentencePieceProcessor(model_file = os.path.join(path, model_file))
+    return sp
+
+def load_sequence_train_data(train_split = 0.8, test_split = 0.15, val_split = 0.05):
+    '''
+    Loads sequence data from genetic attribution challange.
+    IN:
+      train_split (float) - portion fo data for training
+      test_split (float) - portion fo data for testing
+      val_split (float) - portion fo data for validation
+    OUT:
+      (X_train, y_train, X_test, y_test, X_val, y_val) - X_* list of sequences, y_* matrix with one hot encoded label
+    '''
+    assert train_split + test_split + val_split <= 1, "split proportion must add up to 1"
+    train_values = pd.read_csv(DATA_DIR + 'train_values.csv', index_col='sequence_id')
+    train_labels = pd.read_csv(DATA_DIR + 'train_labels.csv', index_col='sequence_id')
+    train_labels_onehot = train_labels.to_numpy()
+    seqs = list(train_values.sequence)
+    n_seq = len(seqs)
+    idxs = np.arange(n_seq)
+    np.random.shuffle(idxs)
+    seqs = np.array(seqs, dtype=object)
+    tr_idxs = idxs[:int(train_split*n_seq)]
+    tst_idxs = idxs[int(train_split*n_seq):int(train_split*n_seq)+int(test_split*n_seq)]
+    val_idxs = idxs[int(train_split*n_seq)+int(test_split*n_seq):]
+    X_train = seqs[tr_idxs]
+    X_test = seqs[tst_idxs]
+    X_val = seqs[val_idxs]
+    y_train = train_labels_onehot[tr_idxs,:]
+    y_test = train_labels_onehot[tst_idxs,:]
+    y_val = train_labels_onehot[val_idxs,:]
+    return (list(X_train), y_train, list(X_test), y_test, list(X_val), y_val)
