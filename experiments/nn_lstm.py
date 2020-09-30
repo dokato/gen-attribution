@@ -1,5 +1,4 @@
-import os
-import sys
+import os, sys, time
 sys.path.insert(0, '..')
 from utils import *
 
@@ -15,6 +14,7 @@ torch.manual_seed(1)
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
+VOCAB_SIZE = 1000
 N_CLASSES  = 1314
 
 class LSTM_network(nn.Module):
@@ -76,7 +76,6 @@ def train(X, y, Xval, yval, emb_weights, Xtest = None, ytest = None,
     '''
     net = LSTM_network(emb_weights, 200)
     net.to(device)
-    n_samples = X.shape[0]
     optimizer = optim.Adam(rnn.parameters(), lr = lr)
     #optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
     criterion = nn.CrossEntropyLoss()
@@ -124,15 +123,16 @@ def train(X, y, Xval, yval, emb_weights, Xtest = None, ytest = None,
         print('Save and exit')
 
 if __name__ == "__main__":
-    VOCAB_SIZE = 1000
     NR_EPOCHS = 1
     print("Loading data")
     (X_train, y_train, X_test, y_test, X_val, y_val) = load_sequence_train_data()
     sp = load_bpe_model(f'x{VOCAB_SIZE}.model')
     print('Encoding BPE')
+    t0 = time.time()
     X_train = sp.encode(X_train)
     X_test = sp.encode(X_test)
     X_val = sp.encode(X_val)
+    print('took', (time.time() - t0)/60)
     print('Loading embeddings')
     embs = load_embeddings('word2vec_skipgram_vocab1000_100dim_10epochs.pickle')
     train(X_train, y_train, X_val, y_val, embs, X_test, y_test, epochs = NR_EPOCHS)
