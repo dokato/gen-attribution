@@ -62,7 +62,7 @@ def padding_training_seq(X, vocab_size = VOCAB_SIZE):
     return Xt.long()
 
 def train(X, y, Xval, yval, emb_weights, Xtest = None, ytest = None,
-          epochs = 1, batch = 100, lr = 0.01, save = None):
+          epochs = 1, batch = 512, lr = 0.01, save = None):
     '''
     IN:
       X - matrix of shape (nr of sequences, sequence length, nr of embeddings)
@@ -80,7 +80,7 @@ def train(X, y, Xval, yval, emb_weights, Xtest = None, ytest = None,
     #optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
     criterion = nn.CrossEntropyLoss()
     Xval = padding_training_seq(Xval)
-    yval = torch.from_numpy(yval)
+    yval = torch.from_numpy(yval).long()
     Xval, yval = Xval.to(device), yval.to(device)
     print('Training started')
     for e in range(epochs):
@@ -88,8 +88,8 @@ def train(X, y, Xval, yval, emb_weights, Xtest = None, ytest = None,
         val_loss = 0
         net.train()
         for xb, yb in batch_sorted(X, y, batch):
-            X_train = padding_training_seq(Xb) # how to handle different sequence size ???
-            y_train = torch.from_numpy(yb)
+            X_train = padding_training_seq(xb) # how to handle different sequence size ???
+            y_train = torch.from_numpy(yb).long()
 
             X_train, y_train = X_train.to(device), y_train.to(device)
             optimizer.zero_grad()
@@ -112,7 +112,7 @@ def train(X, y, Xval, yval, emb_weights, Xtest = None, ytest = None,
     print('Training done!')
     if Xtest:
         Xtest = padding_training_seq(Xtest)
-        ytest = torch.from_numpy(ytest)
+        ytest = torch.from_numpy(ytest).long()
         Xtest, ytest = Xtest.to(device), ytest.to(device)
         net.eval()
         y_pred_tst = net.forward(Xval)
