@@ -1,3 +1,4 @@
+import os
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -15,6 +16,9 @@ N_CLASSES  = 1314
 class LSTM_network(nn.Module):
 
     def __init__(self, embedding_weights, hidden_dim = 128):
+        '''
+        embedding_weights - torch.LongTensor (nr of emb, emb dim)
+        '''
         super(LSTM_network, self).__init__()
         emb_vocab, emb_dim = embedding_weights.shape
         self.emb = nn.Embedding.from_pretrained(embedding_weights)
@@ -40,13 +44,7 @@ class LSTM_network(nn.Module):
         x = self.softmax(self.fc2(x))
         return x
 
-def load_embeddings(path):
-    '''
-    Reads pretrained embeddings from the *path*.
-    '''
-    pass
-
-def padding_training_seq(X):
+def padding_training_seq(X, emb_size = EMB_SIZE):
     '''
     Padding training sequence to the size size.
     Returns torch.tensor.
@@ -54,9 +52,9 @@ def padding_training_seq(X):
     lengths = map(len, X)
     max_seq = max(lengths)
     n_samples = len(X)
-    Xt = torch.zeros((n_samples, max_seq))
+    Xt = torch.zeros((n_samples, max_seq)) + emb_size
     for i in range(5): 
-        Xt[i,:len(X[i])] = torch.tensor(X[i]
+        Xt[i,:len(X[i])] = torch.tensor(X[i])
     return Xt
 
 def train(X, y, Xval, yval, epochs = 1, batch = 10, lr = 0.01):
@@ -85,7 +83,7 @@ def train(X, y, Xval, yval, epochs = 1, batch = 10, lr = 0.01):
             X_train = padding_training_seq(Xb) # how to handle different sequence size ???
             y_train = torch.from_numpy(yb)
 
-            #X_train, y_train = X_train.to(device), y_train.to(device)
+            X_train, y_train = X_train.to(device), y_train.to(device)
             optimizer.zero_grad()
 
             y_pred = net.forward(X_train)

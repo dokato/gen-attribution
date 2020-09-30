@@ -2,7 +2,14 @@ import numpy as np
 import pandas as pd
 import itertools
 import time
+import os
 import pickle
+
+## contants
+
+EMB_PATH = " /data/deeplearn/genetic-engineering-attribution-challenge/models/"
+
+## auxiliary function
 
 def pad_dna(seqs, maxlen):
     '''
@@ -188,3 +195,23 @@ def batch_sorted(X, y, batch_size):
     np.random.shuffle(buckets)
     for Xb, yb in buckets:
         yield Xb, yb
+
+def load_embeddings(emb_file, path = EMB_PATH, add_padding = 'zero'):
+    '''
+    Reads pretrained embeddings from the *path*/*emb_file*.
+    If *add_padding* is not None, it adds extra embedding (last index) for padding:
+    'zero' - full of zeros
+    'mean' - average of all embeddings
+    '''
+    with open(os.path.join(path, emb_file), 'rb') as f: 
+        embw = pickle.load(f)
+        embw = embw[0]
+    embeddings = 0.5*(embw['input_embeddings.weight'] + embw['output_embeddings.weight'])
+    nr_emb, emb_dim = embeddings.shape
+    if add_padding == 'zero':
+        device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        padz = torch.zeros((1, emb_dim), device = device)
+        embeddings = torch.cat((embeddings, padz), 0)
+   if add_padding == 'mean':
+        embeddings = torch.cat((embeddings, embeddings.mean(axis=0).view((1, emb_dim))), 0)
+    return embeddings
