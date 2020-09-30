@@ -34,7 +34,7 @@ dna_seqpad_length = 2*max_seq_length+cnn_filter_length
 
 num_classes = len(train_labels.columns)
 
-total_epoch = 10
+total_epoch = 20
 filter_num = 128
 filter_len = cnn_filter_length
 num_dense_nodes = 200
