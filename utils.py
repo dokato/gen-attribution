@@ -245,13 +245,13 @@ def load_sequence_train_data(train_split = 0.8, test_split = 0.15, val_split = 0
     train_labels = pd.read_csv(DATA_DIR + 'train_labels.csv', index_col='sequence_id')
     train_labels_onehot = train_labels.to_numpy()
     seqs = list(train_values.sequence)
-    n_seq = len(seqs)
-    idxs = np.arange(n_seq)
-    np.random.shuffle(idxs)
     seqs = np.array(seqs, dtype=object)
     # due to GPU memory issues one needs to filter out very long sequences
     lens = np.array(list(map(len, seqs)))
     seqs = seqs[lens < st.scoreatpercentile(lens, 100-alpha)]
+    n_seq = len(seqs)
+    idxs = np.arange(n_seq)
+    np.random.shuffle(idxs)
     tr_idxs = idxs[:int(train_split*n_seq)]
     tst_idxs = idxs[int(train_split*n_seq):int(train_split*n_seq)+int(test_split*n_seq)]
     val_idxs = idxs[int(train_split*n_seq)+int(test_split*n_seq):]
