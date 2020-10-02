@@ -8,7 +8,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 
 import numpy as np
-import scipy.stats as st
+
 
 print("Torch", torch.__version__)
 torch.manual_seed(1)
