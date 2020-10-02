@@ -8,6 +8,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 
 import numpy as np
+import scipy.stats as st
 
 print("Torch", torch.__version__)
 torch.manual_seed(1)
@@ -25,7 +26,7 @@ class LSTM_network(nn.Module):
         '''
         super(LSTM_network, self).__init__()
         emb_vocab, emb_dim = embedding_weights.shape
-        self.emb = nn.Embedding.from_pretrained(embedding_weights)
+        self.emb = nn.Embedding.from_pretrained(embedding_weights) # size of input 
         self.lstm = nn.LSTM(input_size = emb_dim,
                             hidden_size = int(hidden_dim),
                             num_layers = 2,
@@ -127,6 +128,7 @@ def train(X, y, Xval, yval, emb_weights, Xtest = None, ytest = None,
 
 if __name__ == "__main__":
     NR_EPOCHS = 1
+    BATCH_SIZE = 512
     print("Loading data")
     (X_train, y_train, X_test, y_test, X_val, y_val) = load_sequence_train_data()
     sp = load_bpe_model(f'x{VOCAB_SIZE}.model')
@@ -135,7 +137,8 @@ if __name__ == "__main__":
     X_train = sp.encode(X_train)
     X_test = sp.encode(X_test)
     X_val = sp.encode(X_val)
-    print('took', (time.time() - t0)/60)
+    print('(took', (time.time() - t0)/60, ')')
     print('Loading embeddings')
     embs = load_embeddings('word2vec_skipgram_vocab1000_100dim_10epochs.pickle')
-    train(X_train, y_train, X_val, y_val, embs, X_test, y_test, epochs = NR_EPOCHS)
+    train(X_train, y_train, X_val, y_val, embs, X_test, y_test,
+          epochs = NR_EPOCHS, batch=BATCH_SIZE)

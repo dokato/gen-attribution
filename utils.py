@@ -228,13 +228,14 @@ def load_bpe_model(model_file, path = BPE_PATH):
     sp = spm.SentencePieceProcessor(model_file = os.path.join(path, model_file))
     return sp
 
-def load_sequence_train_data(train_split = 0.8, test_split = 0.15, val_split = 0.05):
+def load_sequence_train_data(train_split = 0.8, test_split = 0.15, val_split = 0.05, alpha = 5):
     '''
     Loads sequence data from genetic attribution challange.
     IN:
       train_split (float) - portion fo data for training
       test_split (float) - portion fo data for testing
       val_split (float) - portion fo data for validation
+      alpha (int) - percent of values to filter based on seq length
     OUT:
       (X_train, y_train, X_test, y_test, X_val, y_val) - X_* list of sequences, y_* matrix with one hot encoded label
     '''
@@ -247,6 +248,9 @@ def load_sequence_train_data(train_split = 0.8, test_split = 0.15, val_split = 0
     idxs = np.arange(n_seq)
     np.random.shuffle(idxs)
     seqs = np.array(seqs, dtype=object)
+    # due to GPU memory issues one needs to filter out very long sequences
+    lens = np.array(list(map(len, seqs)))
+    seqs = seqs[lens < st.scoreatpercentile(lens, 100-alpha)]
     tr_idxs = idxs[:int(train_split*n_seq)]
     tst_idxs = idxs[int(train_split*n_seq):int(train_split*n_seq)+int(test_split*n_seq)]
     val_idxs = idxs[int(train_split*n_seq)+int(test_split*n_seq):]
