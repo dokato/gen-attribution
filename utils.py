@@ -300,6 +300,7 @@ def load_trimmed_sequence_train_data(train_split = 0.8, test_split = 0.15, val_s
     n_seq = len(seqs)
     idxs = np.arange(n_seq)
     np.random.shuffle(idxs)
+    seqs = np.array(seqs, dtype=object)
     tr_idxs = idxs[:int(train_split*n_seq)]
     tst_idxs = idxs[int(train_split*n_seq):int(train_split*n_seq)+int(test_split*n_seq)]
     val_idxs = idxs[int(train_split*n_seq)+int(test_split*n_seq):]
