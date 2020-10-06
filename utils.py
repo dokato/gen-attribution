@@ -262,3 +262,55 @@ def load_sequence_train_data(train_split = 0.8, test_split = 0.15, val_split = 0
     y_test = train_labels_onehot[tst_idxs,:]
     y_val = train_labels_onehot[val_idxs,:]
     return (list(X_train), y_train, list(X_test), y_test, list(X_val), y_val)
+
+def trim_sequences(X, y, trim):
+    '''
+    Makes sure that sentences in X are mamximum *trim* size.
+    It cuts them into pieces and adds trailing to the end of the list.
+    '''
+    Xn = []
+    yn = []
+    y = list(y)
+    for e, sq in enumerate(X):
+        if len(sq) < trim:
+            Xn.append(sq)
+            yn.append(y[e])
+        else:
+            for i in range(0, len(seq), trim)
+                Xn.append(sq[i*trim:((i+1)*trim)])
+                yn.append(y[e])
+    return Xn, np.array(yn)
+
+def load_trimmed_sequence_train_data(train_split = 0.8, test_split = 0.15, val_split = 0.05, trim = 2000):
+    '''
+    Loads sequence data from genetic attribution challange.
+    IN:
+      train_split (float) - portion fo data for training
+      test_split (float) - portion fo data for testing
+      val_split (float) - portion fo data for validation
+      trim (int) - percent of values to filter based on seq length
+    OUT:
+      (X_train, y_train, X_test, y_test, X_val, y_val) - X_* list of sequences, y_* matrix with one hot encoded label
+    '''
+    assert train_split + test_split + val_split <= 1, "split proportion must add up to 1"
+    train_values = pd.read_csv(DATA_DIR + 'train_values.csv', index_col='sequence_id')
+    train_labels = pd.read_csv(DATA_DIR + 'train_labels.csv', index_col='sequence_id')
+    train_labels_onehot = train_labels.to_numpy()
+    seqs = list(train_values.sequence)
+    n_seq = len(seqs)
+    idxs = np.arange(n_seq)
+    np.random.shuffle(idxs)
+    tr_idxs = idxs[:int(train_split*n_seq)]
+    tst_idxs = idxs[int(train_split*n_seq):int(train_split*n_seq)+int(test_split*n_seq)]
+    val_idxs = idxs[int(train_split*n_seq)+int(test_split*n_seq):]
+    X_train = seqs[tr_idxs]
+    X_test = seqs[tst_idxs]
+    X_val = seqs[val_idxs]
+    y_train = train_labels_onehot[tr_idxs,:]
+    y_test = train_labels_onehot[tst_idxs,:]
+    y_val = train_labels_onehot[val_idxs,:]
+    X_train, X_test, X_val = list(X_train), list(X_test), list(X_val)
+    X_train_n = trim_sequences(X_train, trim)
+    X_test_n = trim_sequences(X_test, trim)
+    X_val_n = trim_sequences(X_val, trim)
+    return (X_train_n, y_train, X_test_n, y_test, X_val_n, y_val)
