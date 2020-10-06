@@ -311,7 +311,7 @@ def load_trimmed_sequence_train_data(train_split = 0.8, test_split = 0.15, val_s
     y_test = train_labels_onehot[tst_idxs,:]
     y_val = train_labels_onehot[val_idxs,:]
     X_train, X_test, X_val = list(X_train), list(X_test), list(X_val)
-    X_train_n = trim_sequences(X_train, trim)
-    X_test_n = trim_sequences(X_test, trim)
-    X_val_n = trim_sequences(X_val, trim)
+    X_train_n, y_train = trim_sequences(X_train, y_train, trim)
+    X_test_n, y_test = trim_sequences(X_test, y_test, trim)
+    X_val_n, y_val = trim_sequences(X_val, y_val, trim)
     return (X_train_n, y_train, X_test_n, y_test, X_val_n, y_val)
