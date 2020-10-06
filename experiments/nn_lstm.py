@@ -94,8 +94,8 @@ def train(X, y, Xval, yval, emb_weights, Xtest = None, ytest = None,
             y_train = torch.from_numpy(yb).long()
 
             X_train, y_train = X_train.to(device), y_train.to(device)
-            print(X_train.shape)
-            print(torch.cuda.memory_allocated()/1024**2) #in Mb
+            #print(X_train.shape)
+            #print(torch.cuda.memory_allocated()/1024**2) #in Mb
             optimizer.zero_grad()
 
             y_pred = net.forward(X_train)
@@ -126,7 +126,7 @@ def train(X, y, Xval, yval, emb_weights, Xtest = None, ytest = None,
         y_pred_tst = torch.zeros((len(Xtest), N_CLASSES))
         for i in range(len(Xtest)):
             xt_ = padding_training_seq([Xtest[i]])
-            print('>', xt_.shape)
+            #print('>', xt_.shape)
             xt_ = xt_.to(device)
             a = net.forward(xt_.view((1, xt_.shape[1])))
             y_pred_tst[i,:] = a
@@ -154,4 +154,4 @@ if __name__ == "__main__":
     print('Loading embeddings')
     embs = load_embeddings('word2vec_skipgram_vocab1000_100dim_10epochs.pickle')
     train(X_train, y_train, X_val, y_val, embs, X_test, y_test,
-          epochs = NR_EPOCHS, batch=BATCH_SIZE)
+          epochs = NR_EPOCHS, batch=BATCH_SIZE, save = 'tst1')
