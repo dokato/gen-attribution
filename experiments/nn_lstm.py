@@ -143,7 +143,7 @@ if __name__ == "__main__":
     NR_EPOCHS = 2
     BATCH_SIZE = 8
     print("Loading data")
-    (X_train, y_train, X_test, y_test, X_val, y_val) = load_sequence_train_data(alpha = 20)
+    (X_train, y_train, X_test, y_test, X_val, y_val) = load_trimmed_sequence_train_data(trim = 2000)
     sp = load_bpe_model(f'x{VOCAB_SIZE}.model')
     print('Encoding BPE')
     t0 = time.time()
@@ -153,5 +153,5 @@ if __name__ == "__main__":
     print('(took', (time.time() - t0)/60, ')')
     print('Loading embeddings')
     embs = load_embeddings('word2vec_skipgram_vocab1000_100dim_10epochs.pickle')
-    train(X_train, y_train, X_val, y_val, embs, X_test, y_test,
-          epochs = NR_EPOCHS, batch=BATCH_SIZE, save = 'tst1')
+    train(X_train, y_train, X_val, y_val, embs,
+          epochs = NR_EPOCHS, batch=BATCH_SIZE, save = 't1')
