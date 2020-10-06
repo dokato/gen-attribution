@@ -58,7 +58,7 @@ def padding_training_seq(X, vocab_size = VOCAB_SIZE):
     max_seq = max(lengths)
     n_samples = len(X)
     Xt = torch.zeros((n_samples, max_seq), device=device) + vocab_size
-    for i in range(n_samples): 
+    for i in range(n_samples):
         Xt[i,:len(X[i])] = torch.tensor(X[i])
     return Xt.long()
 
@@ -84,40 +84,53 @@ def train(X, y, Xval, yval, emb_weights, Xtest = None, ytest = None,
     yval = torch.from_numpy(yval).long()
     Xval, yval = Xval.to(device), yval.to(device)
     print('Training started')
+    torch.cuda.empty_cache()
     for e in range(epochs):
         total_loss = 0
         val_loss = 0
         net.train()
         for xb, yb in batch_sorted(X, y, batch):
-            X_train = padding_training_seq(xb) # how to handle different sequence size ???
+            X_train = padding_training_seq(xb)
             y_train = torch.from_numpy(yb).long()
 
             X_train, y_train = X_train.to(device), y_train.to(device)
+            print(X_train.shape)
+            print(torch.cuda.memory_allocated()/1024**2) #in Mb
             optimizer.zero_grad()
 
             y_pred = net.forward(X_train)
             loss = criterion(y_pred, y_train.argmax(1))
 
             # calculate gradients and update
-            loss.backward()    
+            loss.backward()
             optimizer.step()
 
             total_loss += loss.item()
             print('.', end = "")
-        print()
+            #torch.cuda.empty_cache()
+        print('val')
         net.eval()
-        y_pred_val = net.forward(Xval)
-        loss = criterion(y_pred_val.argmax(1), yval.argmax(1))
+        y_pred_val = torch.zeros((Xval.shape[0], N_CLASSES), device=device)
+        for i in range(Xval.shape[0]):
+            a = net.forward(Xval[i, :].view((1, Xval.shape[1])))
+            y_pred_val[i,:] = a
+        loss = criterion(y_pred_val, yval.argmax(1))
         val_loss = loss.item()
         print(f"E: {e+1}/{epochs}| total training loss: {total_loss} | val loss: {val_loss}")
     print('Training done!')
     if Xtest:
-        Xtest = padding_training_seq(Xtest)
+        torch.cuda.empty_cache()
         ytest = torch.from_numpy(ytest).long()
-        Xtest, ytest = Xtest.to(device), ytest.to(device)
+        ytest = ytest.to(device)
         net.eval()
-        y_pred_tst = net.forward(Xval)
-        loss = criterion(y_pred_tst.argmax(1), ytest.argmax(1))
+        y_pred_tst = torch.zeros((len(Xtest), N_CLASSES))
+        for i in range(len(Xtest)):
+            xt_ = padding_training_seq([Xtest[i]])
+            print('>', xt_.shape)
+            xt_ = xt_.to(device)
+            a = net.forward(xt_.view((1, xt_.shape[1])))
+            y_pred_tst[i,:] = a
+        loss = criterion(y_pred_tst, ytest.argmax(1))
         tst_loss = loss.item()
         print(f'Test loss {tst_loss}')
         print('TOP 10 on test:', top10_accuracy_scorer_binary(y_pred_tst, None, ytest, proba=True))
@@ -127,10 +140,10 @@ def train(X, y, Xval, yval, emb_weights, Xtest = None, ytest = None,
         print('Save and exit')
 
 if __name__ == "__main__":
-    NR_EPOCHS = 1
-    BATCH_SIZE = 512
+    NR_EPOCHS = 2
+    BATCH_SIZE = 8
     print("Loading data")
-    (X_train, y_train, X_test, y_test, X_val, y_val) = load_sequence_train_data()
+    (X_train, y_train, X_test, y_test, X_val, y_val) = load_sequence_train_data(alpha = 20)
     sp = load_bpe_model(f'x{VOCAB_SIZE}.model')
     print('Encoding BPE')
     t0 = time.time()
