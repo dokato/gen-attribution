@@ -276,7 +276,7 @@ def trim_sequences(X, y, trim):
             Xn.append(sq)
             yn.append(y[e])
         else:
-            for i in range(0, len(seq), trim)
+            for i in range(0, len(seq), trim):
                 Xn.append(sq[i*trim:((i+1)*trim)])
                 yn.append(y[e])
     return Xn, np.array(yn)
