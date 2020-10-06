@@ -272,12 +272,12 @@ def trim_sequences(X, y, trim):
     yn = []
     y = list(y)
     for e, sq in enumerate(X):
-        if len(sq) < trim:
+        if len(sq) <= trim:
             Xn.append(sq)
             yn.append(y[e])
         else:
             for i in range(0, len(sq), trim):
-                Xn.append(sq[i*trim:((i+1)*trim)])
+                Xn.append(sq[i:i+trim])
                 yn.append(y[e])
     return Xn, np.array(yn)
 
@@ -288,7 +288,7 @@ def load_trimmed_sequence_train_data(train_split = 0.8, test_split = 0.15, val_s
       train_split (float) - portion fo data for training
       test_split (float) - portion fo data for testing
       val_split (float) - portion fo data for validation
-      trim (int) - percent of values to filter based on seq length
+      trim (int) - max size of sequence
     OUT:
       (X_train, y_train, X_test, y_test, X_val, y_val) - X_* list of sequences, y_* matrix with one hot encoded label
     '''
