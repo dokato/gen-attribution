@@ -281,6 +281,13 @@ def trim_sequences(X, y, trim):
                 yn.append(y[e])
     return Xn, np.array(yn)
 
+def chunked_train(model, X, chunk_size):
+    seq_size = X.shape[1]
+    hid = None
+    for i in range(0, seq_size, chunk_size):
+        ypred, hid = model.forward(X[:, i : i + chunk_size], hid)
+    return ypred
+
 def load_trimmed_sequence_train_data(train_split = 0.8, test_split = 0.15, val_split = 0.05, trim = 2000):
     '''
     Loads sequence data from genetic attribution challange.

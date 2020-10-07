@@ -37,17 +37,20 @@ class LSTM_network(nn.Module):
         self.fc2 = nn.Linear(1000, N_CLASSES)
         self.softmax = nn.Softmax(dim=1)
 
-    def forward(self, X):
+    def forward(self, X, hid = None):
         '''
         X - (batch size, seq. length)
         '''
         x_emb = self.emb(X) # output should be (batch size, seq. length, embedding size)
-        x, _ = self.lstm(x_emb)
+        if hid == None:
+            x, hid = self.lstm(x_emb)
+        else:
+            x, hid = self.lstm(x_emb, hid)
         x = x[:, -1, :]
         x = F.relu(self.fc1(x))
         x = self.drop(x)
         x = self.softmax(self.fc2(x))
-        return x
+        return x, hid
 
 def padding_training_seq(X, vocab_size = VOCAB_SIZE):
     '''
@@ -98,7 +101,7 @@ def train(X, y, Xval, yval, emb_weights, Xtest = None, ytest = None,
             #print(torch.cuda.memory_allocated()/1024**2) #in Mb
             optimizer.zero_grad()
 
-            y_pred = net.forward(X_train)
+            y_pred = chunked_train(net, X_train, 200)
             loss = criterion(y_pred, y_train.argmax(1))
 
             # calculate gradients and update
@@ -110,10 +113,11 @@ def train(X, y, Xval, yval, emb_weights, Xtest = None, ytest = None,
             #torch.cuda.empty_cache()
         print('val')
         net.eval()
-        y_pred_val = torch.zeros((Xval.shape[0], N_CLASSES), device=device)
-        for i in range(Xval.shape[0]):
-            a = net.forward(Xval[i, :].view((1, Xval.shape[1])))
-            y_pred_val[i,:] = a
+        #y_pred_val = torch.zeros((Xval.shape[0], N_CLASSES), device=device)
+        #for i in range(Xval.shape[0]):
+        #    a = net.forward(Xval[i, :].view((1, Xval.shape[1])))
+        #    y_pred_val[i,:] = a
+        y_pred_val = chunked_train(net, X_val, 200)
         loss = criterion(y_pred_val, yval.argmax(1))
         val_loss = loss.item()
         print(f"E: {e+1}/{epochs}| total training loss: {total_loss} | val loss: {val_loss}")
@@ -123,13 +127,14 @@ def train(X, y, Xval, yval, emb_weights, Xtest = None, ytest = None,
         ytest = torch.from_numpy(ytest).long()
         ytest = ytest.to(device)
         net.eval()
-        y_pred_tst = torch.zeros((len(Xtest), N_CLASSES))
-        for i in range(len(Xtest)):
-            xt_ = padding_training_seq([Xtest[i]])
-            #print('>', xt_.shape)
-            xt_ = xt_.to(device)
-            a = net.forward(xt_.view((1, xt_.shape[1])))
-            y_pred_tst[i,:] = a
+        #y_pred_tst = torch.zeros((len(Xtest), N_CLASSES))
+        #for i in range(len(Xtest)):
+        #    xt_ = padding_training_seq([Xtest[i]])
+        #    #print('>', xt_.shape)
+        #    xt_ = xt_.to(device)
+        #    a = net.forward(xt_.view((1, xt_.shape[1])))
+        #    y_pred_tst[i,:] = a
+        y_pred_tst = chunked_train(net, Xtest, 200)
         loss = criterion(y_pred_tst, ytest.argmax(1))
         tst_loss = loss.item()
         print(f'Test loss {tst_loss}')
@@ -143,7 +148,7 @@ if __name__ == "__main__":
     NR_EPOCHS = 2
     BATCH_SIZE = 8
     print("Loading data")
-    (X_train, y_train, X_test, y_test, X_val, y_val) = load_trimmed_sequence_train_data(trim = 2000)
+    (X_train, y_train, X_test, y_test, X_val, y_val) = load_sequence_train_data(alpha = 1)
     sp = load_bpe_model(f'x{VOCAB_SIZE}.model')
     print('Encoding BPE')
     t0 = time.time()
