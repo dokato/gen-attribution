@@ -92,6 +92,7 @@ def train(X, y, Xval, yval, emb_weights, Xtest = None, ytest = None,
         total_loss = 0
         val_loss = 0
         net.train()
+        ii = 0
         for xb, yb in batch_sorted(X, y, batch):
             X_train = padding_training_seq(xb)
             y_train = torch.from_numpy(yb).long()
@@ -109,7 +110,9 @@ def train(X, y, Xval, yval, emb_weights, Xtest = None, ytest = None,
             optimizer.step()
 
             total_loss += loss.item()
-            print('.', end = "")
+            ii += 1
+            if ii % 100 == 0:
+                print('.', end = "")
             #torch.cuda.empty_cache()
         print('val')
         net.eval()
@@ -134,6 +137,8 @@ def train(X, y, Xval, yval, emb_weights, Xtest = None, ytest = None,
         #    xt_ = xt_.to(device)
         #    a = net.forward(xt_.view((1, xt_.shape[1])))
         #    y_pred_tst[i,:] = a
+        Xtest = padding_training_seq(Xtest)
+        Xtest = Xtest.to(device)
         y_pred_tst = chunked_train(net, Xtest, 200)
         loss = criterion(y_pred_tst, ytest.argmax(1))
         tst_loss = loss.item()
