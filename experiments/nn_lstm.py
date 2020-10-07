@@ -116,11 +116,10 @@ def train(X, y, Xval, yval, emb_weights, Xtest = None, ytest = None,
             #torch.cuda.empty_cache()
         print('val')
         net.eval()
-        #y_pred_val = torch.zeros((Xval.shape[0], N_CLASSES), device=device)
-        #for i in range(Xval.shape[0]):
-        #    a = net.forward(Xval[i, :].view((1, Xval.shape[1])))
-        #    y_pred_val[i,:] = a
-        y_pred_val = chunked_train(net, X_val, 200)
+        y_pred_val = torch.zeros((Xval.shape[0], N_CLASSES), device=device)
+        for i in range(Xval.shape[0]):
+            a = chunked_train(net, Xval[i, :].view((1, Xval.shape[1])), 200)
+            y_pred_val[i,:] = a
         loss = criterion(y_pred_val, yval.argmax(1))
         val_loss = loss.item()
         print(f"E: {e+1}/{epochs}| total training loss: {total_loss} | val loss: {val_loss}")
@@ -130,13 +129,13 @@ def train(X, y, Xval, yval, emb_weights, Xtest = None, ytest = None,
         ytest = torch.from_numpy(ytest).long()
         ytest = ytest.to(device)
         net.eval()
-        #y_pred_tst = torch.zeros((len(Xtest), N_CLASSES))
-        #for i in range(len(Xtest)):
-        #    xt_ = padding_training_seq([Xtest[i]])
-        #    #print('>', xt_.shape)
-        #    xt_ = xt_.to(device)
-        #    a = net.forward(xt_.view((1, xt_.shape[1])))
-        #    y_pred_tst[i,:] = a
+        y_pred_tst = torch.zeros((len(Xtest), N_CLASSES))
+        for i in range(len(Xtest)):
+            xt_ = padding_training_seq([Xtest[i]])
+            #print('>', xt_.shape)
+            xt_ = xt_.to(device)
+            a = chunked_train(net, xt_.view((1, xt_.shape[1])), 200)
+            y_pred_tst[i,:] = a
         Xtest = padding_training_seq(Xtest)
         Xtest = Xtest.to(device)
         y_pred_tst = chunked_train(net, Xtest, 200)
