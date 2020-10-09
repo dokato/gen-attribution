@@ -27,6 +27,7 @@ def make_model(max_seq_len, emb_size, lstm_hidden = 128):
     model.add(Activation("softmax"))
     model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=["accuracy"])
     print(model.summary())
+    return model
 
 def train_model(model, X_train, y_train, X_val, y_val, epochs, save = False):
     cl_weight = get_class_weights(y_train)
