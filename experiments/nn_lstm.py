@@ -149,7 +149,7 @@ def train(X, y, Xval, yval, emb_weights, Xtest = None, ytest = None,
         print('Save and exit')
 
 if __name__ == "__main__":
-    NR_EPOCHS = 2
+    NR_EPOCHS = 20
     BATCH_SIZE = 8
     print("Loading data")
     (X_train, y_train, X_test, y_test, X_val, y_val) = load_sequence_train_data(alpha = 1)

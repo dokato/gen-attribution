@@ -35,13 +35,13 @@ def train_model(model, X_train, y_train, X_val, y_val, epochs, save = False):
                 validation_data=(X_val, y_val), epochs = epochs, verbose=1,
                 class_weight = cl_weight)
     if save:
-        with open(save, 'wb') as f:
-            pickle.dump(history, save + '.pkl')
+        with open(save + '.pkl', 'wb') as f:
+            pickle.dump(history, f)
         model.save(save + '.h5')
 
 if __name__ == "__main__":
-    NR_EPOCHS = 10
-    BATCH_SIZE = 32
+    NR_EPOCHS = 40
+    BATCH_SIZE = 64
     MAX_LEN = 10000
     EMB_SIZE = 200
     print("Loading data")
